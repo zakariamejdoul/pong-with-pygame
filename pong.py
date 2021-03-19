@@ -85,7 +85,6 @@ def restart_ball():
         score_time = None
 
 
-pygame.mixer.pre_init(44100, -16, 1, 1024)
 pygame.init()
 clock = pygame.time.Clock()
 
