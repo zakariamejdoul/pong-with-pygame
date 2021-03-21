@@ -1,6 +1,8 @@
+from sklearn.neighbors import KNeighborsRegressor
 import pygame
 import sys
 import random
+import pandas as pd
 
 
 def ball_moves():
@@ -48,13 +50,13 @@ def player_moves():
         player.bottom = screen_height
 
 
-def opponent_moves():
+def opponent_moves(newY):
     if opponent.top < ball.y:
-        opponent.y += opponent_speed
+        opponent.y = newY
 
     if opponent.bottom > ball.y:
-        opponent.y -= opponent_speed
-
+        opponent.y = newY
+    
     if opponent.top <= 0:
         opponent.top = 0
     if opponent.bottom >= screen_height:
@@ -90,7 +92,7 @@ clock = pygame.time.Clock()
 
 # Game window
 screen_width = 1280
-screen_height = 960
+screen_height = 750
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Pong Game')
 
@@ -116,15 +118,33 @@ player_score = 0
 opponent_score = 0
 font = pygame.font.Font('freesansbold.ttf', 32)
 
+
+pong = pd.read_csv("pong_ai.csv")
+pong = pong.drop_duplicates()
+
+X = pong.drop(columns='opponent.y')
+y = pong['opponent.y']
+
+
+clf = KNeighborsRegressor(n_neighbors=3)
+clf.fit(X, y)
+
+df = pd.DataFrame(columns=['X', 'y', 'ball_speed_x', 'ball_speed_y'])
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
 
+    toPredict = df.append(
+        {'X': ball.x, 'y': ball.y, 'ball_speed_x': ball_speed_x, 'ball_speed_y': ball_speed_y}, ignore_index=True)
+
+    shouldMoveOn = clf.predict(toPredict)
+
     ball_moves()
     player_moves()
-    opponent_moves()
+    opponent_moves(int(shouldMoveOn))
 
     # Graphics
     screen.fill(bgColor)
@@ -132,15 +152,17 @@ while True:
     pygame.draw.rect(screen, componentColor, opponent)
     pygame.draw.ellipse(screen, componentColor, ball)
     pygame.draw.aaline(screen, componentColor,
-                    (screen_width/2, 0), (screen_width/2, screen_height))
+                       (screen_width/2, 0), (screen_width/2, screen_height))
 
     if score_time:
         restart_ball()
     player_text = font.render(f'{player_score}', False, componentColor)
-    screen.blit(player_text, (660, 470))
+    screen.blit(player_text, (660, 385))
 
     opponent_text = font.render(f'{opponent_score}', False, componentColor)
-    screen.blit(opponent_text, (600, 470))
+    screen.blit(opponent_text, (600, 385))
 
     pygame.display.flip()
     clock.tick(60)
+
+    
