@@ -1,4 +1,4 @@
-# Pong with Pygame and Prediction Algorithm (KNeighborsRegressor) for Opponent
+# Pong with Pygame and K-NN Prediction Algorithm (KNeighborsRegressor) for Opponent
 
 The final prototype looks like :
 
